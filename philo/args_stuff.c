@@ -72,11 +72,12 @@ int	number(char c)
 
 void	assign(t_list *ph, int argc, char **argv)
 {
-	ph->philo = ft_atoi(argv[1]);
-	ph->forks = ph->philo;
+	ph->num_philo = ft_atoi(argv[1]);
+	ph->num_forks = ph->num_philo;
 	ph->time_to_die = ft_atoi(argv[2]);
 	ph->time_to_eat = ft_atoi(argv[3]);
 	ph->time_to_sleep = ft_atoi(argv[4]);
+	ph->eating_times = -1;
 	if (argc == 6)
-		ph->times_nbr = ft_atoi(argv[5]);
+		ph->eating_times = ft_atoi(argv[5]);
 }
