@@ -6,66 +6,76 @@
 /*   By: slaajour <slaajour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/31 12:06:54 by slaajour          #+#    #+#             */
-/*   Updated: 2022/10/31 12:19:54 by slaajour         ###   ########.fr       */
+/*   Updated: 2022/11/10 10:19:36 by slaajour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philosophers.h"
 
-void	mutex_init(t_list *info)
+void	create(t_list *info)
 {
-	int i;
-
-	info->mutex = malloc(sizeof(pthread_mutex_t) * info->num_philo);
-	if (!info->mutex)
-		return(printf("Error in allocation of memory :)!\n"));
-	i = 0;
-	while (i < info->num_philo)
-	{
-		pthread_mutex_init(&info->mutex[i], NULL);
-		i++;
-	}
-	pthread_mutex_init(&info->protect, NULL);
-}
-
-void	create(t_ph *philo, t_list *info)
-{
-	int i;
+	int	i;
+	int	j;
 
 	i = 0;
-	info->time = ft_gettime();
+	init(info);
 	while (i < info->num_philo)
-	{
-		philo[i].id = i + 1;
-		philo[i].right_fork = (i + 1) % info->num_philo;
-		philo[i].left_fork = i;
-		philo[i].eating_times = 0;
-		philo[i].info = info;
-		if (pthread_create(&philo[i].t1, NULL, &routine, &philo[i]) != 0)
-			return(printf("Error in creating the threads\n"));
+	{	
+		info->ph[i].id = i + 1;
+		info->ph[i].data = info;
+		info->ph[i].right_fork = (i + 1) % info->num_philo;
+		info->ph[i].left_fork = i;
+		info->ph[i].provi = 0;
+		pthread_create(&info->ph[i].t1, NULL, &routine, &info->ph[i]);
 		i++;
 		usleep(90);
 	}
-	optional(info, philo);
+	optional(info);
+	j = 0;
+	while (j < info->num_philo)
+	{
+		pthread_mutex_destroy(&info->mutex[j]);
+		j++;
+	}
+	pthread_mutex_destroy(info->pro);
 }
 
-int	optional(t_list *info, t_ph *philo)
+int	difference(t_ph inf)
 {
-	int		try;
+	if (ft_gettime() - (inf.data->time) - (inf.provi)
+		>= (inf.data->time_to_die))
+		return (1);
+	return (0);
+}
+
+int	norm(t_list *info)
+{
+	int	try;
+
+	try = 0;
+	pthread_mutex_lock(info->pro);
+	if (info->meals / info->eating_times == info->num_philo)
+		try = 1;
+	pthread_mutex_unlock(info->pro);
+	if (try == 1)
+		return (0);
+	return (1);
+}
+
+void	optional(t_list *info)
+{
 	int		i;
 
 	i = 0;
-	try = 0;
-	if (info->meals / info->eating_times == info->num_philo)
-		try = 1;
 	while (1)
 	{
-		if (try == 0 && info->eating_times != -1)
+		if (!(norm(info)) && info->eating_times != -1)
 			return ;
-		if ((ft_gettime() - info.info->time) - (info.provi) >= info.info->time_to_die)
+		if (difference(info->ph[i]))
 		{
-			pthread_mutex_lock(info_protect);
-			hh_mout(philo);
+			pthread_mutex_lock(info->protect);
+			printf("\033[1;30m%ld %d died\n",
+				ft_gettime() - info->time, info->ph[i].id);
 			return ;
 		}
 		i++;
@@ -76,18 +86,16 @@ int	optional(t_list *info, t_ph *philo)
 
 int	main(int argc, char **argv)
 {
-	t_ph	*philo;
 	t_list	*info;
 
 	if ((argc >= 5 && argc <= 6) && error_check(argv) == 0)
 	{
-		philo = malloc(sizeof(t_ph) * ft_atoi(argv[1]));
 		info = malloc(sizeof(t_list));
-		if (!philo || !info)
-			return(printf("Error in allocation of memory :)!\n"));
-		assign(philo, argc, argv);
-		mutex_init(info);
-		create(philo, info);
+		if (!info)
+			return (printf("Error in allocation of memory :)!\n"));
+		assign(info, argc, argv);
+		if (info->eating_times != 0)
+			create(info);
 	}
 	else
 		printf("Error in arguments :)!\n");
