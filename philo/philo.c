@@ -6,7 +6,7 @@
 /*   By: slaajour <slaajour@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/10/31 12:06:54 by slaajour          #+#    #+#             */
-/*   Updated: 2022/11/10 10:19:36 by slaajour         ###   ########.fr       */
+/*   Updated: 2022/11/11 04:33:15 by slaajour         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,14 +40,6 @@ void	create(t_list *info)
 	pthread_mutex_destroy(info->pro);
 }
 
-int	difference(t_ph inf)
-{
-	if (ft_gettime() - (inf.data->time) - (inf.provi)
-		>= (inf.data->time_to_die))
-		return (1);
-	return (0);
-}
-
 int	norm(t_list *info)
 {
 	int	try;
@@ -71,13 +63,15 @@ void	optional(t_list *info)
 	{
 		if (!(norm(info)) && info->eating_times != -1)
 			return ;
-		if (difference(info->ph[i]))
+		pthread_mutex_lock(info->pro);
+		if (ft_gettime() - info->time - info->ph[i].provi >= info->time_to_die)
 		{
 			pthread_mutex_lock(info->protect);
 			printf("\033[1;30m%ld %d died\n",
 				ft_gettime() - info->time, info->ph[i].id);
 			return ;
 		}
+		pthread_mutex_unlock(info->pro);
 		i++;
 		if (i == info->num_philo)
 			i = 0;
